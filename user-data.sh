@@ -4,8 +4,8 @@ set -eux
 sudo yum update -y
 sudo yum install -y git python3 python3-pip
 
-REPO_URL="https://github.com/syaqilaamnajwa/UAS-Model-Deployment---2802488481.git"
-PROJECT_DIR="/home/ec2-user/SageMaker/Final Exam"
+REPO_URL="https://github.com/syaqillanajwa25-ops/credit-score-aws-deployment.git"
+PROJECT_DIR="/home/ec2-user/SageMaker/credit-score-aws-deployment"
 
 mkdir -p /home/ec2-user/SageMaker
 
