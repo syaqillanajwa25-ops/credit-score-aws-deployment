@@ -1,40 +1,61 @@
-import pandas as pd
 import streamlit as st
-
 
 from cloud_inference import SageMakerCreditScoreInference
 
-inference = SageMakerCreditScoreInference()
 
-st.set_page_config(page_title="Credit Score Prediction", layout="wide")
+st.set_page_config(
+    page_title="Credit Score Prediction",
+    page_icon="💳",
+    layout="wide"
+)
 
-st.markdown("""
-<style>
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    max-width: 1250px;
-}
-h1 {
-    font-size: 34px !important;
-}
-h2, h3 {
-    margin-top: 1rem;
-}
-.stButton > button {
-    height: 3rem;
-    font-weight: 600;
-    border-radius: 8px;
-}
-</style>
-""", unsafe_allow_html=True)
+
+@st.cache_resource
+def get_inference_client():
+    return SageMakerCreditScoreInference()
+
+
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1250px;
+    }
+
+    h1 {
+        font-size: 34px !important;
+    }
+
+    h2, h3 {
+        margin-top: 1rem;
+    }
+
+    .stButton > button {
+        height: 3rem;
+        font-weight: 600;
+        border-radius: 8px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 
 st.title("Credit Score Prediction")
-st.write("Input customer financial and credit information to predict the credit score category.")
+
+st.write(
+    "Input customer financial and credit information "
+    "to predict the credit score category."
+)
 
 st.divider()
 
+
+# =========================================================
+# Customer Information
+# =========================================================
 
 st.subheader("Customer Information")
 
@@ -43,12 +64,21 @@ col1, col2, col3 = st.columns(3)
 with col1:
     month = st.selectbox(
         "Month",
-        ["January", "February", "March", "April", "May", "June", "July", "August"]
+        [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August"
+        ]
     )
 
     age = st.number_input(
         "Age",
-        min_value=0,
+        min_value=17,
         max_value=100,
         value=30,
         step=1
@@ -58,9 +88,22 @@ with col2:
     occupation = st.selectbox(
         "Occupation",
         [
-            "Accountant", "Architect", "Developer", "Doctor", "Engineer",
-            "Entrepreneur", "Journalist", "Lawyer", "Manager", "Mechanic",
-            "Media_Manager", "Musician", "Scientist", "Teacher", "Writer", "Unknown"
+            "Accountant",
+            "Architect",
+            "Developer",
+            "Doctor",
+            "Engineer",
+            "Entrepreneur",
+            "Journalist",
+            "Lawyer",
+            "Manager",
+            "Mechanic",
+            "Media_Manager",
+            "Musician",
+            "Scientist",
+            "Teacher",
+            "Writer",
+            "Unknown"
         ]
     )
 
@@ -94,6 +137,10 @@ with col3:
     )
 
 
+# =========================================================
+# Credit Account Information
+# =========================================================
+
 st.divider()
 st.subheader("Credit Account Information")
 
@@ -126,7 +173,7 @@ with col2:
     )
 
     num_loan = st.number_input(
-        "Number of Loan",
+        "Number of Loans",
         min_value=0,
         max_value=20,
         value=2,
@@ -143,7 +190,12 @@ with col3:
 
     credit_mix = st.selectbox(
         "Credit Mix",
-        ["Good", "Standard", "Bad", "Unknown"]
+        [
+            "Good",
+            "Standard",
+            "Bad",
+            "Unknown"
+        ]
     )
 
     loan_type = st.selectbox(
@@ -162,6 +214,10 @@ with col3:
     )
 
 
+# =========================================================
+# Payment Information
+# =========================================================
+
 st.divider()
 st.subheader("Payment Information")
 
@@ -176,7 +232,7 @@ with col1:
     )
 
     delayed_payment = st.number_input(
-        "Number of Delayed Payment",
+        "Number of Delayed Payments",
         min_value=0.0,
         max_value=100.0,
         value=10.0,
@@ -185,7 +241,11 @@ with col1:
 
     min_payment = st.selectbox(
         "Payment of Minimum Amount",
-        ["Yes", "No", "Unknown"]
+        [
+            "Yes",
+            "No",
+            "Unknown"
+        ]
     )
 
 with col2:
@@ -239,9 +299,18 @@ with col3:
     )
 
 
+# =========================================================
+# Prediction
+# =========================================================
+
 st.divider()
 
-predict = st.button("Predict Credit Score", type="primary")
+predict = st.button(
+    "Predict Credit Score",
+    type="primary",
+    use_container_width=True
+)
+
 
 if predict:
     input_data = {
@@ -270,10 +339,38 @@ if predict:
         "Credit_History_Age_Months": float(credit_history)
     }
 
-    prediction, prob_df = inference.predict(input_data)
+    try:
+        with st.spinner("Sending data to AWS SageMaker..."):
+            inference = get_inference_client()
+            prediction, probability_df = inference.predict(input_data)
 
-    st.subheader("Prediction Result")
-    st.success(f"Predicted Credit Score: {prediction}")
+        st.subheader("Prediction Result")
 
-    st.subheader("Prediction Probability")
-    st.dataframe(prob_df, use_container_width=True)
+        st.success(
+            f"Predicted Credit Score: {prediction}"
+        )
+
+        st.subheader("Prediction Probability")
+
+        probability_df = probability_df.sort_values(
+            by="Probability",
+            ascending=False
+        )
+
+        st.dataframe(
+            probability_df,
+            use_container_width=True,
+            hide_index=True
+        )
+
+    except Exception as e:
+        st.error("Unable to generate prediction.")
+
+        st.info(
+            "Make sure the SageMaker endpoint is active and the "
+            "SAGEMAKER_ENDPOINT_NAME and AWS_REGION environment "
+            "variables are configured correctly."
+        )
+
+        with st.expander("Error details"):
+            st.code(str(e))
