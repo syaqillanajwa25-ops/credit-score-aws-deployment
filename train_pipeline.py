@@ -3,10 +3,10 @@ import joblib
 
 from sklearn.model_selection import train_test_split
 
-from Local.data_ingestion import DataIngestion
-from Local.preprocessing import DataPreprocessor
-from Local.training import ModelTrainer
-from Local.evaluation import ModelEvaluator
+from data_ingestion import DataIngestion
+from preprocessing import DataPreprocessor
+from training import ModelTrainer
+from evaluation import ModelEvaluator
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
