@@ -9,8 +9,9 @@ from sagemaker.sklearn.model import SKLearnModel
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
 
-MODEL_FILE = os.path.join(BASE_DIR, "best_credit_score_model.pkl")
+MODEL_FILE = os.path.join(PROJECT_ROOT, "best_credit_score_model.pkl")
 INFERENCE_SCRIPT = os.path.join(BASE_DIR, "inference_sagemaker.py")
 MODEL_TAR_FILE = os.path.join(BASE_DIR, "model.tar.gz")
 
@@ -51,7 +52,7 @@ def deploy_model(model_artifact):
     sklearn_model = SKLearnModel(
         model_data=s3_model_path,
         role=role,
-        entry_point="inference_sagemaker.py",
+        entry_point=INFERENCE_SCRIPT,
         framework_version="1.4-2",
         py_version="py3",
         name=f"{PROJECT_PREFIX}-model-{int(time.time())}"
